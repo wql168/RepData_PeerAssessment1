@@ -78,7 +78,7 @@ colnames(mean2)[2] <- "steps"
 
 ```{r plot_1, fig.width = 3.5, fig.height = 3.5, echo=TRUE}
 hist(as.numeric(as.character(mean2$steps)), xlab = 'Average total steps taken per day',
-     main = 'Daily Activity Histogram')
+          main = 'Daily Activity Histogram')
 ```
 
 3. calculate and report the mean and median of the total number of steps taken per day.
@@ -180,6 +180,7 @@ hist(as.numeric(as.character(mean_new2$grp.mean.values)), xlab = 'Total Number o
 
 The mean of the from the new dataset is:
 ```{r echo=TRUE}
+
 mean(as.numeric(as.character(mean_new2$grp.mean.values)))
 
 ```
@@ -233,13 +234,15 @@ par(oma=c(3,3,3,3))
 
 # 1. plot the top weekend panel:
 
-plot(strptime(str_pad(as.numeric(act_new_2_we_mean2$interval), width=4, pad="0") , '%H%M'), act_new_2_we_mean2$grp.mean.values, type ='l', ylim=c(1,240), xlab = '', cex.axis=0.6, xaxt='n', ann=FALSE)
+plot(strptime(str_pad(as.numeric(act_new_2_we_mean2$interval), width=4, pad="0") , '%H%M'), 
+     act_new_2_we_mean2$grp.mean.values, type ='l', ylim=c(1,240), xlab = '', cex.axis=0.6, xaxt='n', ann=FALSE)
 legend( x="top", legend=c('                         Weekend                                     '),
         bg = "pink", cex=0.62)
 
 # 2. Plot the bottom weekdays:
 
-plot(strptime(str_pad(as.numeric(act_new_2_wd_mean2$interval), width=4, pad="0") , '%H%M'), act_new_2_wd_mean2$grp.mean.values, type ='l', ylim=c(1,300), yaxt = 'n', cex.axis=0.6)
+plot(strptime(str_pad(as.numeric(act_new_2_wd_mean2$interval), width=4, pad="0") , '%H%M'), 
+     act_new_2_wd_mean2$grp.mean.values, type ='l', ylim=c(1,300), yaxt = 'n', cex.axis=0.6)
 
 ticks<-c(100,200)
 axis(2,at=ticks,labels=ticks, cex.axis=0.6)
