@@ -1,0 +1,260 @@
+---
+title: "Personal Movement Report"
+date: "02/08/2015"
+output:
+  html_document:
+    theme: cerulean
+---
+
+<!-- For more info on RMarkdown see http://rmarkdown.rstudio.com/ -->
+
+<!-- Enter the code required to load your data in the space below. The data will be loaded but the line of code won't show up in your write up (echo=FALSE) in order to save space-->
+
+<!-- In the remainder of the document, add R code chunks as needed -->
+
+### Introduction:
+
+The objective of the project is to provide a reproducible report studying the daily personal movement activity with data obtained using activity monitoring devices such as Fitbit, Nike Fuelband, or Jawbone Up.
+
+The report includes parts for multiple tasks and will be submitted as a single R markdown document that can be processed by knitr and be transformed into an HTML file.
+
+
+### Data:
+
+The data was collected every five minutes throughout the day and consists of two months of data. The data is available at: https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip 
+
+The data consists of three variables: 
+
+steps: number of stpes in a 5-min interval, integer;
+
+date: YYYY-MM-DD, date
+
+interval: a 5-min interval, can be transformed to identiy timestamp.
+
+### Loading and preprocesing the data:
+
+For this task, the data will be loaded into R, and rows with NA values in the steps will be excluded from further calculations.
+
+```{r echo=TRUE}
+# Load data into R:
+
+setwd("C:/Wuxing/Coursera_courses/Reproducible Research/project_1/repdata_data_activity")
+     
+act1 <- read.csv('activity.csv')
+```
+
+```{r echo=TRUE}
+# Remove rows which the steps column has 'NA' values:
+act2 <- act1[!is.na(act1$steps),]
+
+```
+
+
+### What is mean total number of steps taken per day?
+
+This task includes 3 steps: 1. calculate the total number of steps taken per day; 2. make a histogram of the total number of steps taken each day; 3. calculate and report the mean and median of the total number of steps taken per day.
+
+1. The total number of steps taken per day
+
+```{r echo=TRUE}
+# Calculate the total number of steps taken per day:
+library(plyr)
+mean1 <- ddply(act2, "date", transform, grp.mean.values = sum(steps))
+
+# Drop the unwanted columns steps and interval for this calculation:
+
+mean2 <- mean1[, !(names(mean1) %in% c("steps","interval"))]
+
+# Get the unique rows by date:
+
+mean2 <- unique(mean2)
+
+# Rename the third column as "steps":
+colnames(mean2)[2] <- "steps"
+
+```
+
+2. make a histogram of the total number of steps taken each day:
+
+```{r plot_1, fig.width = 3.5, fig.height = 3.5, echo=TRUE}
+hist(as.numeric(as.character(mean2$steps)), xlab = 'Average total steps taken per day',
+     main = 'Daily Activity Histogram')
+```
+
+3. calculate and report the mean and median of the total number of steps taken per day.
+
+The mean of the mean2$steps is:
+```{r echo=TRUE}
+mean(mean2$steps)
+
+```
+
+The median of the mean2$steps is:
+```{r echo=TRUE}
+
+median(mean2$steps)
+
+```
+
+
+### What is the average daily activity pattern?
+
+This part of the task requires: 1. make a time series plot od the 5-min interval and the average number of steps taken, averaged across days; and 2. report the 5-min interval that has the max number of steps.
+
+```{r echo=TRUE}
+
+# This is to make a time series plot:
+require(plyr)
+require(stringr)
+mean3 <- ddply(act2, "interval", transform, grp.mean.values = mean(steps))
+mean4 <- unique(mean3[, !(names(mean3) %in% c("steps","date"))])
+
+```
+
+The time series plot is as shown as below:
+
+```{r plot_2, fig.width = 3.5, fig.height = 3.5, echo=TRUE}
+plot(strptime(str_pad(as.numeric(mean4$interval), width=4, pad="0") , '%H%M'),  
+     mean4$grp.mean.values, type ='l', xlab = 'TimeStamp', ylab = 'Avg number of steps')
+```
+
+The interval that has the maximum number of steps in a 5-min interval is:
+```{r echo=TRUE}
+mean4[which.max(mean4[,2]),][,1]
+```
+
+
+### Imputing missing values:
+
+This task will work with replacing the missing values with substitute values, such as mean or median values of that specific time frame, instead of simplying removing them. For this purpose, this report will replace missing values with the mean values.
+
+The number of rows with missing values is:
+
+```{r echo=TRUE}
+
+# The number of rows with missing values:
+sum(is.na(act1$steps)) 
+# [1] 2304
+```
+
+The following steps remove the rows with missing values and then replace those rows with values of the corresponding mean values:
+
+``` {r echo=TRUE}
+# Filling the missing values with the corresponding mean values for each specific inteval across the dates:
+act_miss <- merge(as.data.frame(act1[which(is.na(act1$steps)),])
+              , mean4, by = 'interval', all = TRUE)
+
+act_miss$steps <- NULL
+
+act_miss <- act_miss[, c("grp.mean.values", "date", "interval")]
+
+colnames(act_miss)[1] <- "steps"
+
+# nrow(act_miss)
+# [1] 2304
+
+# Generate a new data set with the missing values filled in, the new data named act_new has 17658 rows and 0 rows with missing values:
+act_new <- rbind(as.data.frame(act1[which(!is.na(act1$steps)),]), act_miss)
+
+# nrow(as.data.frame(act1[which(!is.na(act1$steps)),]))
+# [1] 15264
+# nrow(act_new)
+# [1] 17568
+# sum(is.na(act_new$steps)) 
+# [1] 0
+
+# Make a histgram from the new dataset act_new, and calculate the mean and median of the toal number of steps taken per day:
+
+require(plyr)
+require(stringr)
+mean_new1 <- ddply(act_new, "date", transform, grp.mean.values = sum(steps))
+mean_new2 <- unique(mean_new1[, !(names(mean_new1) %in% c("steps","interval"))])
+
+```
+
+The histogram from the new data set is shwon as below:
+```{r plot_3, fig.width = 3.5, fig.height = 3.5, echo=TRUE}
+hist(as.numeric(as.character(mean_new2$grp.mean.values)), xlab = 'Total Number of Steps Taken Per Day', main = 'Daily Activity Histogram')
+```
+
+
+The mean of the from the new dataset is:
+```{r echo=TRUE}
+mean(as.numeric(as.character(mean_new2$grp.mean.values)))
+
+```
+
+
+The median of the mean2$steps is:
+```{r echo=TRUE}
+
+median(as.numeric(as.character(mean_new2$grp.mean.values)))
+
+```
+
+It seems that the mean values from two data sets are very close. Therefore it seems that for such a large dataset, missing values at this level may not dramatically affect the results of analyses. Similarly, the median values are essentially similar, thus effect of the missing values is not significant.
+
+### Are there differences in activity patterns between weekdays and weekends?
+
+This task requires to generate a time series plot of the 5-min interval and the average number of steps taken, averaged across all weekday days or weekend days.
+
+```{r echo=TRUE}
+
+# This is to get a data set for the rows that have a date on one of the 5 weekdays:
+
+act_new_2_wd <- act_new[weekdays(as.Date(as.character(act_new$date))) %in% 
+                            c("Monday","Tuesday","Wednesday","Thursday","Friday"),]
+
+act_new_2_wd_mean <- ddply(act_new_2_wd, "interval", transform, grp.mean.values = mean(steps))
+
+act_new_2_wd_mean2 <- unique(act_new_2_wd_mean[, !(names(act_new_2_wd_mean) %in% 
+                                                     c("date","weekday","steps"))])
+
+# This is to get a data set for the rows that have a date on one of the 2 weekend days:
+
+act_new_2_we <- act_new[!weekdays(as.Date(as.character(act_new$date))) %in% 
+                            c("Monday","Tuesday","Wednesday","Thursday","Friday"),]
+
+act_new_2_we_mean <- ddply(act_new_2_we, "interval", transform, grp.mean.values = mean(steps))
+
+act_new_2_we_mean2 <- unique(act_new_2_we_mean[, !(names(act_new_2_we_mean) %in% 
+                                                     c("date","weekday","steps"))])
+
+```
+
+The plot is shown below:
+
+
+```{r plot_4, fig.width = 3.5, fig.height = 3.5, echo=TRUE}
+
+par(mfrow = c(2,1))
+par(mar = c(0,0,0,0))
+par(oma=c(3,3,3,3))
+
+# 1. plot the top weekend panel:
+
+plot(strptime(str_pad(as.numeric(act_new_2_we_mean2$interval), width=4, pad="0") , '%H%M'), act_new_2_we_mean2$grp.mean.values, type ='l', ylim=c(1,240), xlab = '', cex.axis=0.6, xaxt='n', ann=FALSE)
+legend( x="top", legend=c('                         Weekend                                     '),
+        bg = "pink", cex=0.62)
+
+# 2. Plot the bottom weekdays:
+
+plot(strptime(str_pad(as.numeric(act_new_2_wd_mean2$interval), width=4, pad="0") , '%H%M'), act_new_2_wd_mean2$grp.mean.values, type ='l', ylim=c(1,300), yaxt = 'n', cex.axis=0.6)
+
+ticks<-c(100,200)
+axis(2,at=ticks,labels=ticks, cex.axis=0.6)
+
+legend( x="top", legend=c('                        Weekday                                      '),
+        bg = "pink", cex=0.62)
+
+mtext(c("Interval"), line=2, c(SOUTH<-1))
+mtext(c("Number of steps"), line=2, at=250, c(SOUTH<-2))
+
+```
+
+According to the figure shown above, it seems that there are dramatic differences in the number of steps taken per 5-min interval between the weekdays and the weekend days. During weekdays the activity is peeked at around 8AM to 10Am time window, possibly due to the need to get to work. On weekend days the activity is more spread across the daytime, with multiple peaks shown at different time points. In addition, activity starts earlier during weekdays, possibly also caused by the need of going to work.
+
+### Conclusion:
+
+The analysis above indicates that the data collected for personal movement using activity monitoring devices provides multiple uses and thus would be informative for needs such as health research and for social activity analyses.
+
